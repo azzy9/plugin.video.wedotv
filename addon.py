@@ -237,7 +237,7 @@ elif mode == "play":
         if dataStartIndex == -1:
             raise Exception(r'list scrape fail: ' + variant)
 
-        source = re.findall(r'''<source\s*src=\"([^\"]+\.mp4)\"''', html[dataStartIndex : html.find(r'<footer')])[0]
+        source = re.findall(r'''<source\s*src=\"([^\"]+\.mp4(?:\?[^\"]+)?)\"''', html[dataStartIndex : html.find(r'<footer')])[0]
 
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
