@@ -199,7 +199,7 @@ elif mode == "episodes":
             #xbmc.log(html, xbmc.LOGWARNING)
             if dataStartIndex == -1:
                 raise Exception(r'list scrape fail: ' + variant)
-            rurl = re.findall(r'''<source\s*src=\"([^\"]+\.mp4)\"''', html[dataStartIndex : html.find(r'<footer')])[0]
+            rurl = re.findall(r'''<source\s*src=\"([^\"]+\.mp4(?:\?[^\"]+)?)\"''', html[dataStartIndex : html.find(r'<footer')])[0]
             direct = True
 
         if isinstance( rurl, bytes ):
