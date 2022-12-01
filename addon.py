@@ -134,7 +134,7 @@ elif mode == "channels":
 
     variant = args.get("type", [""])[0]
 
-    html = fetchURL(WEB_URL + "/" + variant)
+    html = fetchURL(WEB_URL + "/" + variant, {'confirm_16_years_old':''})
     dataStartIndex = html.find(r'class="collections"')
 
     if dataStartIndex == -1:
@@ -171,7 +171,7 @@ elif mode == "episodes":
     title = args.get("title", [""])[0]
     thumb = args.get("thumb", [""])[0]
 
-    html = fetchURL(WEB_URL + variant)
+    html = fetchURL(WEB_URL + variant, {'confirm_16_years_old':''})
     dataStartIndex = html.find(r'class="dropdowns"')
 
     if dataStartIndex == -1:
@@ -231,7 +231,7 @@ elif mode == "play":
         source = variant
     else:
         xbmc.log(WEB_URL + variant, xbmc.LOGWARNING)
-        html = fetchURL(WEB_URL + variant)
+        html = fetchURL(WEB_URL + variant, {'confirm_16_years_old':''})
         dataStartIndex = html.find(r'class="logo"')
         #xbmc.log(html, xbmc.LOGWARNING)
         if dataStartIndex == -1:
