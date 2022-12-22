@@ -334,7 +334,7 @@ elif mode == "episodes":
                 'mode': 'play',
                 'title': episode_title,
                 'thumb': thumbnail,
-                'isdirect"': True,
+                'isdirect': True,
             })
             xbmcplugin.addDirectoryItem(
                 handle = addon_handle,
