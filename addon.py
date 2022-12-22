@@ -106,9 +106,75 @@ def fetchURL(url, data=None, extraHeaders=None):
 def construct_request(query):
     return base_url + "?" + urllib_parse.urlencode(query)
 
-mode = args.get("mode", None)
+# extract appropriate data from API call 
+def video_meta( data, return_data, variant='' ):
+
+    try:
+        return_data['genre'] = data['extensions']['genre']
+    except:
+        pass
+
+    try:
+        return_data['country'] = data['extensions']['country']
+    except:
+        pass
+
+    if variant == 'getLiveChannels':
+        return_data['year'] = datetime.date.today().year
+    else:
+        try:
+            return_data['year'] = data['extensions']['year']
+        except:
+            pass
+
+    if 'setid' not in return_data.keys() and 'id' in data.keys():
+        return_data['setid'] = data['id']
+
+    try:
+        return_data['rating'] = data['extensions']['imdb_score'].replace('Imdb Rating:','').strip()
+    except:
+        pass
+
+    try:
+        return_data['director'] = data['extensions']['director']
+    except:
+        pass
+
+    try:
+        return_data['plot'] = data['extensions']['description']
+    except:
+        pass
+
+    try:
+        return_data['plotoutline'] = data['summary']
+    except:
+        pass
+
+    if 'title' not in return_data.keys() and 'title' in data.keys():
+        return_data['title'] = data['title']
+
+    try:
+        return_data['duration'] = data['extensions']['duration']
+    except:
+        pass
+
+    try:
+        return_data['mediatype'] = data['type']['value']
+    except:
+        pass
+
+    return return_data
+
+mode = args.get('mode', None)
 if mode is not None:
     mode = mode[0]
+
+# get args
+id = args.get('id', [''])[0]
+variant = args.get('type', [''])[0]
+title = args.get('title', [''])[0]
+thumb = args.get('thumb', [''])[0]
+isdirect = args.get('isdirect', [''])[0]
 
 if mode is None:
 
@@ -131,11 +197,11 @@ if mode is None:
         )
     xbmcplugin.endOfDirectory(addon_handle)
 
-elif mode == "list":
+elif mode == 'list':
 
-    variant = args.get("type", [""])[0]
+    variant = args.get('type', [""])[0]
 
-    list = fetchURL( WEB_URL + "/" + variant ).json()
+    list = fetchURL( WEB_URL + '/' + variant ).json()
 
     for item in list[ 'entry' ]:
 
@@ -176,33 +242,21 @@ elif mode == "list":
 
         if mode == 'play':
 
-            try:
-                duration = item['extensions']['duration']
-            except:
-                duration = ''
+            infoLabels={ 'title': title }
+            infoLabels = video_meta( item, infoLabels, variant )
 
-            try:
-                mediatype = item['type']['value']
-            except:
-                mediatype = ''
-
-            if variant == 'getLiveChannels':
-                year = datetime.date.today().year
-            else:
-                year = ''
-
-            list_item.setInfo( type='Video', infoLabels={ 'setid': item['id'], 'Title': title, 'duration': duration, 'mediatype': mediatype, 'year': year } )
+            list_item.setInfo( 'Video', infoLabels )
             list_item.setProperty('IsPlayable', 'true')
             isFolder = False
         else:
             isFolder = True
 
         callback = construct_request({
-            "id": item['id'],
-            "type": variant,
-            "mode": mode,
-            "title": title,
-            "thumb": thumbnail,
+            'id': item['id'],
+            'type': variant,
+            'mode': mode,
+            'title': title,
+            'thumb': thumbnail,
         })
 
         xbmcplugin.addDirectoryItem(
@@ -215,11 +269,6 @@ elif mode == "list":
     xbmcplugin.endOfDirectory(addon_handle)
 
 elif mode == "episodes":
-
-    id = args.get("id", [""])[0]
-    variant = args.get("type", [""])[0]
-    show_title = args.get("title", [""])[0]
-    thumb = args.get("thumb", [""])[0]
 
     seasons = fetchURL( WEB_URL + '/' + 'getSeasonTabs?series_id=' + id ).json()
 
@@ -237,8 +286,8 @@ elif mode == "episodes":
 
         for episode in episodes[ 'entry' ]:
 
-            title = episode['title'];
-            list_item = xbmcgui.ListItem( title )
+            episode_title = episode['title'];
+            list_item = xbmcgui.ListItem( episode_title )
             mode = media_mode[ media_types.index(variant) ]
 
             thumbnail = ''
@@ -272,38 +321,20 @@ elif mode == "episodes":
                 for art_type in ['banner', 'fanart']:
                     list_item.setArt({art_type:background})
 
-            try:
-                duration = episode['extensions']['duration']
-            except:
-                duration = ''
+            infoLabels={ 'title': episode_title, 'season': season_number, 'mediatype': 'episode', 'tvshowtitle': title }
+            infoLabels = video_meta( episode, infoLabels, variant )
 
-            try:
-                plot = episode['extensions']['description']
-            except:
-                plot = ''
-
-            if year == '':
-                try:
-                    year = episode['extensions']['year']
-                except:
-                    year = ''
-
-            try:
-                director = episode['extensions']['director']
-            except:
-                director = ''
-
-            list_item.setInfo( type='Video', infoLabels={ 'setid': episode['id'], 'Title': title, 'season': season_number, 'duration': duration, 'mediatype': 'episode', 'plot': plot, 'year': year, 'director': director, 'tvshowtitle': show_title } )
+            list_item.setInfo( 'Video', infoLabels )
             list_item.setProperty('IsPlayable', 'true')
 
             callback = construct_request({
-                "id": episode['id'],
-                "url": episode['content']['src'],
-                "type": variant,
-                "mode": 'play',
-                "title": title,
-                "thumb": thumbnail,
-                "isdirect": True,
+                'id': episode['id'],
+                'url': episode['content']['src'],
+                'type': variant,
+                'mode': 'play',
+                'title': episode_title,
+                'thumb': thumbnail,
+                'isdirect"': True,
             })
             xbmcplugin.addDirectoryItem(
                 handle = addon_handle,
@@ -314,13 +345,7 @@ elif mode == "episodes":
 
     xbmcplugin.endOfDirectory(addon_handle)
 
-elif mode == "play":
-
-    id = args.get("id", [""])[0]
-    variant = args.get("type", [""])[0]
-    title = args.get("title", [""])[0]
-    thumb = args.get("thumb", [""])[0]
-    isdirect = args.get("isdirect", [""])[0]
+elif mode == 'play':
 
     if isdirect:
         video = args.get("url", [""])[0]
@@ -329,23 +354,18 @@ elif mode == "play":
 
     if video:
     
+        infoLabels={ 'setid': id }
+    
         if isdirect:
             source = video
+            infoLabels['title'] = title
         else:
-            title = video['entry'][0]['title']
             source = video['entry'][0]['content']['src']
-
-        try:
-            if variant == 'getLiveChannels':
-                year = datetime.date.today().year
-            else:
-                year = video['entry'][0]['extensions']['year'].strip()
-        except:
-            year = ''
+            infoLabels = video_meta( video['entry'][0], infoLabels, variant )
 
         list_item = xbmcgui.ListItem(title, path=source)
-        list_item.setInfo( type="Video", infoLabels={ "setid": id, "Title": title, "year": year } )
-        list_item.setArt({"thumb":thumb})
+        list_item.setInfo( 'Video', infoLabels )
+        list_item.setArt({'thumb':thumb})
 
         xbmcplugin.setResolvedUrl(addon_handle, True, list_item)
     else:
