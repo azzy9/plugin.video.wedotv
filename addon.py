@@ -7,19 +7,20 @@ import six
 from six.moves import urllib, urllib_parse
 
 WEB_URL = 'https://api-applicaster.wedo.tv'
-media_types = ['series', 'movies', 'sports', 'getLiveChannels']
-media_names = ['Series', 'Movies', 'Sports', 'Live']
-media_mode = ['episodes', 'play', 'episodes', 'play']
-play_endpoint = ['getSeason', 'getMovie', 'getSportEvent', 'getLiveChannel']
+media_types = ['series', 'movies', 'sports', 'getLiveChannels', 'search']
+media_names = ['Series', 'Movies', 'Sports', 'Live', 'Search']
+media_mode = ['episodes', 'play', 'episodes', 'play', 'search']
+search_types = ['serie', 'movie', '', '', '']
+play_endpoint = ['getSeason', 'getMovie', 'getSportEvent', 'getLiveChannel', 'getSearchTitle']
 
 base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
 addon = xbmcaddon.Addon()
 args = urllib_parse.parse_qs(sys.argv[2][1:])
 
-xbmcplugin.setContent(addon_handle, "movies")
+xbmcplugin.setContent(addon_handle, 'movies')
 
-PLUGIN_ID = base_url.replace("plugin://","")
+PLUGIN_ID = base_url.replace('plugin://','')
 MEDIA_URL = 'special://home/addons/{0}/resources/media/'.format(PLUGIN_ID)
 
 PROPERTY_SESSION_COOKIE = 'wedotv.cookie'
@@ -106,6 +107,14 @@ def fetchURL(url, data=None, extraHeaders=None):
 def construct_request(query):
     return base_url + "?" + urllib_parse.urlencode(query)
 
+def keyboard_input(heading='', message=''):
+    search_string = None
+    keyboard = xbmc.Keyboard(message, heading)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        search_string = keyboard.getText()
+    return search_string
+
 # extract appropriate data from API call 
 def video_meta( data, return_data, variant='' ):
 
@@ -165,29 +174,26 @@ def video_meta( data, return_data, variant='' ):
 
     return return_data
 
-mode = args.get('mode', None)
-if mode is not None:
-    mode = mode[0]
-
 # get args
+mode = args.get('mode', [''])[0]
 id = args.get('id', [''])[0]
 variant = args.get('type', [''])[0]
 title = args.get('title', [''])[0]
 thumb = args.get('thumb', [''])[0]
 isdirect = args.get('isdirect', [''])[0]
 
-if mode is None:
+if mode == '':
 
     # Type selection
     for i, variant in enumerate(media_types):
         list_item = xbmcgui.ListItem(media_names[i])
         list_item.setArt({
-            "icon":MEDIA_URL + media_names[i] + '.jpg',
-            "poster":MEDIA_URL + media_names[i] + '.jpg',
+            'icon':MEDIA_URL + media_names[i] + '.jpg',
+            'poster':MEDIA_URL + media_names[i] + '.jpg',
         });
         callback = construct_request({
-            "mode": "list",
-            "type": variant,
+            'mode': 'list',
+            'type': variant,
         })
         xbmcplugin.addDirectoryItem(
             handle = addon_handle,
@@ -199,11 +205,22 @@ if mode is None:
 
 elif mode == 'list':
 
-    variant = args.get('type', [""])[0]
+    is_search = False
+    extra_params = ''
 
-    list = fetchURL( WEB_URL + '/' + variant ).json()
+    if variant == 'search':
+        is_search = True
+        term = keyboard_input('Search')
+        if term:
+            extra_params = '?keyword=' + term
+
+    list = fetchURL( WEB_URL + '/' + variant + extra_params ).json()
 
     for item in list[ 'entry' ]:
+
+        if is_search:
+            variant = media_types[ search_types.index(item['type']['value']) ]
+            xbmc.log( variant, xbmc.LOGWARNING )
 
         title = item['title'];
         list_item = xbmcgui.ListItem( title )
@@ -268,7 +285,7 @@ elif mode == 'list':
 
     xbmcplugin.endOfDirectory(addon_handle)
 
-elif mode == "episodes":
+elif mode == 'episodes':
 
     seasons = fetchURL( WEB_URL + '/' + 'getSeasonTabs?series_id=' + id ).json()
 
