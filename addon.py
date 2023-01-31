@@ -332,9 +332,6 @@ elif mode == 'episodes':
             if background == '':
                 background = thumbnail
 
-            if thumbnail.endswith( '/0.jpg' ):
-                thumbnail = MEDIA_URL + media_names[ media_types.index(variant) ] + '.jpg',
-
             # set thumbnails
             if thumbnail:
                 for art_type in ['thumb', 'poster', 'icon']:
