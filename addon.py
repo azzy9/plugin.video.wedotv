@@ -214,6 +214,10 @@ elif mode == 'list':
         if term:
             extra_params = '?keyword=' + term
 
+    # we want all the movies
+    if variant == 'movies':
+        extra_params = '?limit=9999'
+
     list = fetchURL( WEB_URL + '/' + variant + extra_params ).json()
 
     for item in list[ 'entry' ]:
@@ -327,6 +331,9 @@ elif mode == 'episodes':
             # if no background
             if background == '':
                 background = thumbnail
+
+            if thumbnail.endswith( '/0.jpg' ):
+                thumbnail = MEDIA_URL + media_names[ media_types.index(variant) ] + '.jpg',
 
             # set thumbnails
             if thumbnail:
