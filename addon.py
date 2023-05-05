@@ -246,103 +246,26 @@ elif mode == 'list':
 
     list_data = fetch_url( WEB_URL + '/' + variant + extra_params ).json()
 
-    for item in list_data[ 'entry' ]:
+    # Make sure there is data to loop
+    if list_data and list_data.get( 'entry', False ):
 
-        if is_search:
-            variant = media_types[ search_types.index(item['type']['value']) ]
-            xbmc.log( variant, xbmc.LOGWARNING )
+        # loop the data
+        for item in list_data[ 'entry' ]:
 
-        title = item['title']
-        list_item = xbmcgui.ListItem( title )
-        mode = media_mode[ media_types.index(variant) ]
+            if is_search:
+                variant = media_types[ search_types.index(item['type']['value']) ]
+                xbmc.log( variant, xbmc.LOGWARNING )
 
-        thumbnail = ''
-        background = ''
-
-        # check & set thumbnail
-        if item['media_group']:
-            for media in item['media_group']:
-                if media['type'] == 'image':
-                    for media_item in media['media_item']:
-                        if 'portrait' in media_item['key']:
-                            thumbnail = media_item['src']
-                        else:
-                            background = media_item['src']
-
-        # if no thumbnail
-        if thumbnail == '':
-            thumbnail = background
-
-        # if no background
-        if background == '':
-            background = thumbnail
-
-        # set thumbnails
-        if thumbnail:
-            for art_type in ['thumb', 'poster', 'icon']:
-                list_item.setArt({art_type:thumbnail})
-
-        # set background
-        if background:
-            for art_type in ['banner', 'fanart']:
-                list_item.setArt({art_type:background})
-
-        if mode == 'play':
-
-            infoLabels={ 'title': title }
-            infoLabels = video_meta( item, infoLabels, variant )
-
-            list_item.setInfo( 'Video', infoLabels )
-            list_item.setProperty('IsPlayable', 'true')
-            is_folder = False
-        else:
-            is_folder = True
-
-        callback = construct_request({
-            'id': item['id'],
-            'type': variant,
-            'mode': mode,
-            'title': title,
-            'thumb': thumbnail,
-        })
-
-        xbmcplugin.addDirectoryItem(
-            handle = addon_handle,
-            url = callback,
-            listitem = list_item,
-            isFolder = is_folder
-        )
-
-    xbmcplugin.endOfDirectory(addon_handle)
-
-elif mode == 'episodes':
-
-    seasons = fetch_url( WEB_URL + '/' + 'getSeasonTabs?series_id=' + id ).json()
-
-    for season in seasons[ 'entry' ]:
-
-        try:
-            season_number = season['title'].replace('Season','').strip()
-        except Exception:
-            season_number = '1'
-
-        episodes = fetch_url( WEB_URL + '/' + 'getSeason?season_id=' + season['id'] ).json()
-
-        # year is set per season
-        year = ''
-
-        for episode in episodes[ 'entry' ]:
-
-            episode_title = episode['title']
-            list_item = xbmcgui.ListItem( episode_title )
+            title = item['title']
+            list_item = xbmcgui.ListItem( title )
             mode = media_mode[ media_types.index(variant) ]
 
             thumbnail = ''
             background = ''
 
             # check & set thumbnail
-            if episode['media_group']:
-                for media in episode['media_group']:
+            if item['media_group']:
+                for media in item['media_group']:
                     if media['type'] == 'image':
                         for media_item in media['media_item']:
                             if 'portrait' in media_item['key']:
@@ -368,27 +291,121 @@ elif mode == 'episodes':
                 for art_type in ['banner', 'fanart']:
                     list_item.setArt({art_type:background})
 
-            infoLabels={ 'title': episode_title, 'season': season_number, 'mediatype': 'episode', 'tvshowtitle': title }
-            infoLabels = video_meta( episode, infoLabels, variant )
+            if mode == 'play':
 
-            list_item.setInfo( 'Video', infoLabels )
-            list_item.setProperty('IsPlayable', 'true')
+                infoLabels={ 'title': title }
+                infoLabels = video_meta( item, infoLabels, variant )
+
+                list_item.setInfo( 'Video', infoLabels )
+                list_item.setProperty('IsPlayable', 'true')
+                is_folder = False
+            else:
+                is_folder = True
 
             callback = construct_request({
-                'id': episode['id'],
-                'url': episode['content']['src'],
+                'id': item['id'],
                 'type': variant,
-                'mode': 'play',
-                'title': episode_title,
+                'mode': mode,
+                'title': title,
                 'thumb': thumbnail,
-                'isdirect': True,
             })
+
             xbmcplugin.addDirectoryItem(
                 handle = addon_handle,
                 url = callback,
                 listitem = list_item,
-                isFolder = False
+                isFolder = is_folder
             )
+
+    xbmcplugin.endOfDirectory(addon_handle)
+
+elif mode == 'episodes':
+
+    seasons = fetch_url( WEB_URL + '/' + 'getSeasonTabs?series_id=' + id ).json()
+
+    # Make sure there is data to loop
+    if seasons and seasons.get( 'entry', False ):
+
+        # loop the seasons
+        for season in seasons[ 'entry' ]:
+
+            try:
+                season_number = season['title'].replace('Season','').strip()
+            except Exception:
+                season_number = '1'
+
+            episodes = fetch_url( WEB_URL + '/' + 'getSeason?season_id=' + season['id'] ).json()
+
+            # Make sure there is data to loop
+            if episodes and episodes.get( 'entry', False ):
+
+                # year is set per season
+                year = ''
+
+                for episode in episodes[ 'entry' ]:
+
+                    episode_title = episode['title']
+                    list_item = xbmcgui.ListItem( episode_title )
+                    mode = media_mode[ media_types.index(variant) ]
+
+                    thumbnail = ''
+                    background = ''
+
+                    # check & set thumbnail
+                    if episode['media_group']:
+                        for media in episode['media_group']:
+                            if media['type'] == 'image':
+                                for media_item in media['media_item']:
+                                    if 'portrait' in media_item['key']:
+                                        thumbnail = media_item['src']
+                                    else:
+                                        background = media_item['src']
+
+                    # if no thumbnail
+                    if thumbnail == '':
+                        thumbnail = background
+
+                    # if no background
+                    if background == '':
+                        background = thumbnail
+
+                    # set thumbnails
+                    if thumbnail:
+                        for art_type in ['thumb', 'poster', 'icon']:
+                            list_item.setArt({art_type:thumbnail})
+
+                    # set background
+                    if background:
+                        for art_type in ['banner', 'fanart']:
+                            list_item.setArt({art_type:background})
+
+                    infoLabels = {
+                        'title': episode_title,
+                        'season': season_number,
+                        'mediatype': 'episode',
+                        'tvshowtitle': title,
+                    }
+
+                    infoLabels = video_meta( episode, infoLabels, variant )
+
+                    list_item.setInfo( 'Video', infoLabels )
+                    list_item.setProperty('IsPlayable', 'true')
+
+                    callback = construct_request({
+                        'id': episode['id'],
+                        'url': episode['content']['src'],
+                        'type': variant,
+                        'mode': 'play',
+                        'title': episode_title,
+                        'thumb': thumbnail,
+                        'isdirect': True,
+                    })
+                    xbmcplugin.addDirectoryItem(
+                        handle = addon_handle,
+                        url = callback,
+                        listitem = list_item,
+                        isFolder = False
+                    )
 
     xbmcplugin.endOfDirectory(addon_handle)
 
