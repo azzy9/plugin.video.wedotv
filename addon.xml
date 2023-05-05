@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.wedotv" name="WeDoTV" version="0.1.1" provider-name="azzy9">
+<addon id="plugin.video.wedotv" name="WeDoTV" version="0.1.2" provider-name="azzy9">
 	<requires>
 		<import addon="script.module.requests"/>
 		<import addon="script.module.six"/>
@@ -13,11 +13,9 @@
 		<language>uk</language>
 		<platform>all</platform>
 		<license>GPL-3.0-only</license>
-		<news>v0.1.1 (2022-12-22)
-Add Search
-
-v0.1.0 (2022-12-20)
-Change to use API</news>
+		<news>v0.1.2 - Remove the limit for move that limited it to 500
+	- Clean code
+	- Add validation data was being returned before it was being looped</news>
 		<assets>
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
