@@ -18,20 +18,20 @@ import six
 from six.moves import urllib, urllib_parse
 
 WEB_URL = 'https://api-applicaster.wedo.tv'
-media_types = ['series', 'movies', 'sports', 'getLiveChannels', 'search']
-media_names = ['Series', 'Movies', 'Sports', 'Live', 'Search']
-media_mode = ['episodes', 'play', 'episodes', 'play', 'search']
-search_types = ['serie', 'movie', '', '', '']
-play_endpoint = ['getSeason', 'getMovie', 'getSportEvent', 'getLiveChannel', 'getSearchTitle']
+MEDIA_TYPES = ['series', 'movies', 'sports', 'getLiveChannels', 'search']
+MEDIA_NAMES = ['Series', 'Movies', 'Sports', 'Live', 'Search']
+MEDIA_MODE = ['episodes', 'play', 'episodes', 'play', 'search']
+SEARCH_TYPES = ['serie', 'movie', '', '', '']
+PLAY_ENDPOINT = ['getSeason', 'getMovie', 'getSportEvent', 'getLiveChannel', 'getSearchTitle']
 
-base_url = sys.argv[0]
-addon_handle = int(sys.argv[1])
+BASE_URL = sys.argv[0]
+ADDON_HANDLE = int(sys.argv[1])
 addon = xbmcaddon.Addon()
 args = urllib_parse.parse_qs(sys.argv[2][1:])
 
-xbmcplugin.setContent(addon_handle, 'movies')
+xbmcplugin.setContent(ADDON_HANDLE, 'movies')
 
-PLUGIN_ID = base_url.replace('plugin://','')
+PLUGIN_ID = BASE_URL.replace('plugin://','')
 MEDIA_URL = 'special://home/addons/{0}/resources/media/'.format(PLUGIN_ID)
 
 PROPERTY_SESSION_COOKIE = 'wedotv.cookie'
@@ -75,7 +75,7 @@ def fetch_url(url, data=None, extra_headers=None):
     """ fetches data from URL """
 
     my_headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml,application/json;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
         'Cache-Control': 'no-cache',
@@ -127,7 +127,7 @@ def construct_request(query):
 
     """ Constructs Query """
 
-    return base_url + "?" + urllib_parse.urlencode(query)
+    return BASE_URL + "?" + urllib_parse.urlencode(query)
 
 def keyboard_input(heading='', message=''):
 
@@ -211,23 +211,23 @@ isdirect = args.get('isdirect', [''])[0]
 if mode == '':
 
     # Type selection
-    for i, variant in enumerate(media_types):
-        list_item = xbmcgui.ListItem(media_names[i])
+    for i, variant in enumerate(MEDIA_TYPES):
+        list_item = xbmcgui.ListItem(MEDIA_NAMES[i])
         list_item.setArt({
-            'icon':MEDIA_URL + media_names[i] + '.jpg',
-            'poster':MEDIA_URL + media_names[i] + '.jpg',
+            'icon':MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
+            'poster':MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
         })
         callback = construct_request({
             'mode': 'list',
             'type': variant,
         })
         xbmcplugin.addDirectoryItem(
-            handle = addon_handle,
+            handle = ADDON_HANDLE,
             url = callback,
             listitem = list_item,
             isFolder = True
         )
-    xbmcplugin.endOfDirectory(addon_handle)
+    xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
 elif mode == 'list':
 
@@ -253,12 +253,12 @@ elif mode == 'list':
         for item in list_data[ 'entry' ]:
 
             if is_search:
-                variant = media_types[ search_types.index(item['type']['value']) ]
+                variant = MEDIA_TYPES[ SEARCH_TYPES.index(item['type']['value']) ]
                 xbmc.log( variant, xbmc.LOGWARNING )
 
             title = item['title']
             list_item = xbmcgui.ListItem( title )
-            mode = media_mode[ media_types.index(variant) ]
+            mode = MEDIA_MODE[ MEDIA_TYPES.index(variant) ]
 
             thumbnail = ''
             background = ''
@@ -311,13 +311,13 @@ elif mode == 'list':
             })
 
             xbmcplugin.addDirectoryItem(
-                handle = addon_handle,
+                handle = ADDON_HANDLE,
                 url = callback,
                 listitem = list_item,
                 isFolder = is_folder
             )
 
-    xbmcplugin.endOfDirectory(addon_handle)
+    xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
 elif mode == 'episodes':
 
@@ -346,7 +346,7 @@ elif mode == 'episodes':
 
                     episode_title = episode['title']
                     list_item = xbmcgui.ListItem( episode_title )
-                    mode = media_mode[ media_types.index(variant) ]
+                    mode = MEDIA_MODE[ MEDIA_TYPES.index(variant) ]
 
                     thumbnail = ''
                     background = ''
@@ -401,13 +401,13 @@ elif mode == 'episodes':
                         'isdirect': True,
                     })
                     xbmcplugin.addDirectoryItem(
-                        handle = addon_handle,
+                        handle = ADDON_HANDLE,
                         url = callback,
                         listitem = list_item,
                         isFolder = False
                     )
 
-    xbmcplugin.endOfDirectory(addon_handle)
+    xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
 elif mode == 'play':
 
@@ -415,7 +415,7 @@ elif mode == 'play':
         video = args.get("url", [""])[0]
     else:
         video = fetch_url(
-            WEB_URL + '/' + play_endpoint[ media_types.index(variant) ] + '?id=' + id
+            WEB_URL + '/' + PLAY_ENDPOINT[ MEDIA_TYPES.index(variant) ] + '?id=' + id
         ).json()
 
     if video:
@@ -433,6 +433,6 @@ elif mode == 'play':
         list_item.setInfo( 'Video', infoLabels )
         list_item.setArt({'thumb':thumb})
 
-        xbmcplugin.setResolvedUrl(addon_handle, True, list_item)
+        xbmcplugin.setResolvedUrl(ADDON_HANDLE, True, list_item)
     else:
         xbmc.okDialog( 'Error', 'No Video Found' )
