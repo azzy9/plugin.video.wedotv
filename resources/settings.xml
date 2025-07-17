@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<settings>
+
+    <category label="General Settings">
+        <setting type="lsep" label="Appearance" />
+        <setting id="region" type="enum" label="Region" values="Auto|All|GB|US" default="0" />
+    </category>
+
+</settings>

@@ -1,33 +1,33 @@
+import sys
 import ssl
+
+import requests
 
 import xbmc
 import xbmcgui
 import xbmcaddon
 import xbmcplugin
 
-import sys
-import re
-
-import json
-import requests
-
 import datetime
 from time import time, sleep
 
 import six
-from six.moves import urllib, urllib_parse
+from six.moves import urllib_parse
 
 WEB_URL = 'https://api-applicaster.wedo.tv'
 MEDIA_TYPES = ['series', 'movies', 'sports', 'getLiveChannels', 'search']
 MEDIA_NAMES = ['Series', 'Movies', 'Sports', 'Live', 'Search']
 MEDIA_MODE = ['episodes', 'play', 'episodes', 'play', 'search']
+MEDIA_REGIONS = [ '', '', 'gb', 'us' ]
 SEARCH_TYPES = ['serie', 'movie', '', '', '']
 PLAY_ENDPOINT = ['getSeason', 'getMovie', 'getSportEvent', 'getLiveChannel', 'getSearchTitle']
 
 BASE_URL = sys.argv[0]
 ADDON_HANDLE = int(sys.argv[1])
-addon = xbmcaddon.Addon()
+ADDON = xbmcaddon.Addon()
 args = urllib_parse.parse_qs(sys.argv[2][1:])
+
+ADDON_REGION = int(ADDON.getSetting('region'))
 
 xbmcplugin.setContent(ADDON_HANDLE, 'movies')
 
@@ -214,8 +214,8 @@ if mode == '':
     for i, variant in enumerate(MEDIA_TYPES):
         list_item = xbmcgui.ListItem(MEDIA_NAMES[i])
         list_item.setArt({
-            'icon':MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
-            'poster':MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
+            'icon': MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
+            'poster': MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
         })
         callback = construct_request({
             'mode': 'list',
@@ -233,16 +233,23 @@ elif mode == 'list':
 
     is_search = False
     extra_params = ''
+    extra_params_list = []
 
     if variant == 'search':
         is_search = True
-        term = keyboard_input('Search')
+        term = keyboard_input( 'Search' )
         if term:
-            extra_params = '?keyword=' + term
+            extra_params_list.append( 'keyword=' + term )
 
     # we want all the movies
     if variant == 'movies':
-        extra_params = '?limit=9999'
+        extra_params_list.append( 'limit=9999' )
+
+    if ADDON_REGION > 0:
+        extra_params_list.append( 'country=' + MEDIA_REGIONS[ ADDON_REGION ] )
+
+    if extra_params_list:
+        extra_params = '?' + '&'.join( extra_params_list )
 
     list_data = fetch_url( WEB_URL + '/' + variant + extra_params ).json()
 
@@ -254,7 +261,6 @@ elif mode == 'list':
 
             if is_search:
                 variant = MEDIA_TYPES[ SEARCH_TYPES.index(item['type']['value']) ]
-                xbmc.log( variant, xbmc.LOGWARNING )
 
             title = item['title']
             list_item = xbmcgui.ListItem( title )
