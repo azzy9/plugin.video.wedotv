@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.wedotv" name="WeDoTV" version="0.1.2" provider-name="azzy9">
+<addon id="plugin.video.wedotv" name="WeDoTV" version="0.1.3" provider-name="azzy9">
 	<requires>
 		<import addon="script.module.requests"/>
 		<import addon="script.module.six"/>
@@ -11,11 +11,10 @@
 		<summary lang="en_GB">WeDoTV</summary>
 		<description lang="en_GB">This addon allows you watch Movies and TV Series from WeDoTV</description>
 		<language>uk</language>
+		<website>https://github.com/azzy9/plugin.video.wedotv</website>
 		<platform>all</platform>
 		<license>GPL-3.0-only</license>
-		<news>v0.1.2 - Remove the limit for move that limited it to 500
-	- Clean code
-	- Add validation data was being returned before it was being looped</news>
+		<news>See the changelog in the commits on Github</news>
 		<assets>
 			<icon>icon.png</icon>
 			<fanart>fanart.jpg</fanart>
