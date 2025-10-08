@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.wedotv" name="WeDoTV" version="0.1.3" provider-name="azzy9">
 	<requires>
+		<import addon="script.module.routing" version="0.2.3"/>
 		<import addon="script.module.requests"/>
 		<import addon="script.module.six"/>
 	</requires>
@@ -16,8 +17,8 @@
 		<license>GPL-3.0-only</license>
 		<news>See the changelog in the commits on Github</news>
 		<assets>
-			<icon>icon.png</icon>
-			<fanart>fanart.jpg</fanart>
+			<icon>resources/assets/icon.png</icon>
+			<fanart>resources/assets/fanart.jpg</fanart>
 		</assets>
 	</extension>
 </addon>
