@@ -56,6 +56,18 @@ def menu():
             listitem = list_item,
             isFolder = True
         )
+
+    list_item = xbmcgui.ListItem(get_string(5))
+    list_item.setArt({
+        'icon': MEDIA_URL + 'blank.jpg',
+        'poster': MEDIA_URL + 'blank.jpg',
+    })
+    xbmcplugin.addDirectoryItem(
+        handle = ADDON_HANDLE,
+        url = plugin.url_for(settings),
+        listitem = list_item,
+        isFolder = True
+    )
     xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
 @plugin.route('/list/<uri>')
@@ -286,6 +298,13 @@ def play(uri):
         xbmcplugin.setResolvedUrl(ADDON_HANDLE, True, list_item)
     else:
         xbmc.okDialog( 'Error', 'No Video Found' )
+
+@plugin.route('/settings')
+def settings():
+
+    """ Method to open settings menu """
+
+    ADDON.openSettings()
 
 def run():
 

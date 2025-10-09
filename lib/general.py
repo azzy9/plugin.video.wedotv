@@ -20,6 +20,14 @@ __language__ = ADDON.getLocalizedString
 dialog = xbmcgui.Dialog()
 reqs = requests.session()
 
+def get_string( string_id ):
+
+    """ gets language string based upon id """
+
+    if string_id >= 30000:
+        return __language__( string_id )
+    return xbmc.getLocalizedString( string_id )
+
 def request_get( url, data=None, extra_headers=None, return_json=True ):
 
     """ makes a request """
