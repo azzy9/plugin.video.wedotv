@@ -3,8 +3,11 @@
 <settings>
 
     <category label="General Settings">
-        <setting type="lsep" label="Appearance" />
+        <setting type="lsep" label="Video List" />
         <setting id="region" type="enum" label="Region" values="Auto|All|GB|US" default="0" />
+        <setting type="lsep" label="Subtitles" />
+        <setting id="subtitles_enabled" label="Subtitles Enabled" type="bool" default="False" />
+        <setting id="subtitles_select" label="Subtitles Selection" type="bool" default="False" visible="eq(-1,True)" />
     </category>
 
 </settings>

@@ -247,11 +247,9 @@ def episodes(uri):
 
                     callback = {
                         'id': episode['id'],
-                        'url': episode['content']['src'],
                         'type': variant,
                         'title': episode_title,
                         'thumb': thumbnail,
-                        'isdirect': True,
                     }
                     url = plugin.url_for(play, uri=pack_uri(callback))
                     xbmcplugin.addDirectoryItem(
@@ -263,13 +261,35 @@ def episodes(uri):
 
     xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
+def subtitles_select( subtitles_in ):
+
+    subtitles = []
+    selected_index = -1
+
+    subtitles_tmp = []
+    for key in subtitles_in:
+        subtitles_tmp.append((key, subtitles_in[ key ]))
+
+    if ADDON.getSetting('subtitles_select') == 'true' and len( subtitles_tmp ) > 1:
+        selected_index = xbmcgui.Dialog().select(
+            'Select Subtitle', [(lang[0] or '?') for lang in subtitles_tmp]
+        )
+
+    if selected_index != -1:
+        subtitles.append( subtitles_tmp[selected_index][1] )
+    else:
+        for subs in subtitles_tmp:
+            subtitles.append( subs[1] )
+
+    return subtitles
+
 @plugin.route('/play/<uri>')
 def play(uri):
 
     """ plays video """
 
     params = unpack_uri( uri )
-    video_url = params.get( 'url', False )
+    video_url = False
     video_id = params.get( 'id', '' )
     variant = params.get( 'variant', '' )
     title = params.get( 'title', '' )
@@ -277,21 +297,31 @@ def play(uri):
 
     info_labels={}
 
-    if video_url is False and video_id:
+    if video_id:
         video = request_get(
             WEB_URL + '/' + PLAY_ENDPOINT[ MEDIA_TYPES.index(variant) ] + '?id=' + video_id,
             return_json=True
         )
-        info_labels['setid'] = video_id
-        video_url = video['entry'][0]['content']['src']
-        info_labels = video_meta( video['entry'][0], info_labels, variant )
 
+        info_labels['setid'] = video_id
+        entry = video['entry'][0]
+        video_url = entry['content']['src']
+        subtitles = entry['extensions'].get('subtitles', {}).get('srt', False)
+        info_labels = video_meta( entry, info_labels, variant )
 
     if video_url:
 
         info_labels['title'] = title
 
         list_item = xbmcgui.ListItem(title, path=video_url)
+
+        # set subtitles if available & enabled
+        if subtitles and ADDON.getSetting('subtitles_enabled') == 'true':
+            subtitles = subtitles_select( subtitles )
+            if subtitles:
+                list_item.setSubtitles( subtitles )
+
+
         list_item.setArt({'thumb': thumb })
         item_set_info( list_item, info_labels )
 
