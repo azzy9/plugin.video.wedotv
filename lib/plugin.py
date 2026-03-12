@@ -13,7 +13,8 @@ from six.moves import urllib_parse
 from lib.exception import PluginException
 from lib.general import *
 
-WEB_URL = 'https://api-applicaster.wedo.tv'
+API_URL = 'https://api-applicaster.wedo.tv'
+WEB_URL = 'https://www.wedotv.com/api/'
 MEDIA_TYPES = ['series', 'movies', 'sports', 'getLiveChannels', 'search']
 MEDIA_NAMES = ['Series', 'Movies', 'Sports', 'Live', 'Search']
 MEDIA_MODE = ['episodes', 'play', 'episodes', 'play', 'search']
@@ -99,7 +100,7 @@ def list_cat(uri):
     if extra_params_list:
         extra_params = '?' + '&'.join( extra_params_list )
 
-    list_data = request_get( WEB_URL + '/' + variant + extra_params, return_json=True )
+    list_data = request_get( API_URL + '/' + variant + extra_params, return_json=True )
 
     # Make sure there is data to loop
     if list_data and list_data.get( 'entry', False ):
@@ -181,7 +182,7 @@ def episodes(uri):
     variant = params.get( 'variant', '' )
     title = params.get( 'title', '' )
 
-    seasons = request_get( WEB_URL + '/' + 'getSeasonTabs?series_id=' + season_id, return_json=True )
+    seasons = request_get( API_URL + '/' + 'getSeasonTabs?series_id=' + season_id, return_json=True )
 
     # Make sure there is data to loop
     if seasons and seasons.get( 'entry', False ):
@@ -194,7 +195,7 @@ def episodes(uri):
             except Exception:
                 season_number = '1'
 
-            episodes = request_get( WEB_URL + '/' + 'getSeason?season_id=' + season['id'], return_json=True )
+            episodes = request_get( API_URL + '/' + 'getSeason?season_id=' + season['id'], return_json=True )
 
             # Make sure there is data to loop
             if episodes and episodes.get( 'entry', False ):
@@ -266,19 +267,15 @@ def subtitles_select( subtitles_in ):
     subtitles = []
     selected_index = -1
 
-    subtitles_tmp = []
-    for key in subtitles_in:
-        subtitles_tmp.append((key, subtitles_in[ key ]))
-
-    if ADDON.getSetting('subtitles_select') == 'true' and len( subtitles_tmp ) > 1:
+    if ADDON.getSetting('subtitles_select') == 'true' and len( subtitles_in ) > 1:
         selected_index = xbmcgui.Dialog().select(
-            'Select Subtitle', [(lang[0] or '?') for lang in subtitles_tmp]
+            'Select Subtitle', [(lang[0] or '?') for lang in subtitles_in]
         )
 
     if selected_index != -1:
-        subtitles.append( subtitles_tmp[selected_index][1] )
+        subtitles.append( subtitles_in[selected_index][1] )
     else:
-        for subs in subtitles_tmp:
+        for subs in subtitles_in:
             subtitles.append( subs[1] )
 
     return subtitles
@@ -299,14 +296,14 @@ def play(uri):
 
     if video_id:
         video = request_get(
-            WEB_URL + '/' + PLAY_ENDPOINT[ MEDIA_TYPES.index(variant) ] + '?id=' + video_id,
+            API_URL + '/' + PLAY_ENDPOINT[ MEDIA_TYPES.index(variant) ] + '?id=' + video_id,
             return_json=True
         )
 
         info_labels['setid'] = video_id
         entry = video['entry'][0]
         video_url = entry['content']['src']
-        subtitles = entry['extensions'].get('subtitles', {}).get('srt', False)
+
         info_labels = video_meta( entry, info_labels, variant )
 
     if video_url:
@@ -315,8 +312,24 @@ def play(uri):
 
         list_item = xbmcgui.ListItem(title, path=video_url)
 
-        # set subtitles if available & enabled
-        if subtitles and ADDON.getSetting('subtitles_enabled') == 'true':
+        # if subtitles are enabled
+        if ADDON.getSetting('subtitles_enabled') == 'true':
+
+            # for some reason all subtitles only get added via the web url
+            web_video = request_get(
+                WEB_URL + 'player.get_video.php?video_id=' + video_id,
+                return_json=True
+            )
+
+            subtitles = []
+
+            subs = web_video.get('subtitles', False)
+            if subs:
+                for sub in subs:
+                    src = sub.get( 'src', False )
+                    if src:
+                        subtitles.append(( str(sub.get( 'label', src )), src ))
+
             subtitles = subtitles_select( subtitles )
             if subtitles:
                 list_item.setSubtitles( subtitles )
