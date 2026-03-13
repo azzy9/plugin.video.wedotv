@@ -24,7 +24,6 @@ PLAY_ENDPOINT = ['getSeason', 'getMovie', 'getSportEvent', 'getLiveChannel', 'ge
 
 plugin = routing.Plugin()
 
-BASE_URL = sys.argv[0]
 ADDON_HANDLE = int(sys.argv[1])
 ADDON = xbmcaddon.Addon()
 args = urllib_parse.parse_qs(sys.argv[2][1:])
@@ -33,7 +32,7 @@ ADDON_REGION = int(ADDON.getSetting('region'))
 
 xbmcplugin.setContent(ADDON_HANDLE, 'movies')
 
-PLUGIN_ID = BASE_URL.replace('plugin://','')
+PLUGIN_ID = 'plugin.video.wedotv'
 MEDIA_URL = 'special://home/addons/{0}/resources/media/'.format(PLUGIN_ID)
 
 @plugin.route('/')
@@ -48,16 +47,21 @@ def menu():
             'icon': MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
             'poster': MEDIA_URL + MEDIA_NAMES[i] + '.jpg',
         })
-        callback = {
-            'variant': variant,
-        }
+        if variant == 'search':
+            callback_url = plugin.url_for(search_menu)
+        else:
+            callback = {
+                'variant': variant,
+            }
+            callback_url = plugin.url_for(list_cat, uri=pack_uri(callback))
         xbmcplugin.addDirectoryItem(
             handle = ADDON_HANDLE,
-            url = plugin.url_for(list_cat, uri=pack_uri(callback)),
+            url = callback_url,
             listitem = list_item,
             isFolder = True
         )
 
+    # settings
     list_item = xbmcgui.ListItem(get_string(5))
     list_item.setArt({
         'icon': MEDIA_URL + 'blank.jpg',
@@ -66,6 +70,28 @@ def menu():
     xbmcplugin.addDirectoryItem(
         handle = ADDON_HANDLE,
         url = plugin.url_for(settings),
+        listitem = list_item,
+        isFolder = True
+    )
+    xbmcplugin.endOfDirectory(ADDON_HANDLE)
+
+@plugin.route('/search_menu')
+def search_menu():
+
+    """ search menu list """
+
+    list_item = xbmcgui.ListItem(MEDIA_NAMES[4])
+    list_item.setArt({
+        'icon': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+        'poster': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+    })
+    callback = {
+        'variant': MEDIA_TYPES[4],
+    }
+    callback_url = plugin.url_for(list_cat, uri=pack_uri(callback))
+    xbmcplugin.addDirectoryItem(
+        handle = ADDON_HANDLE,
+        url = callback_url,
         listitem = list_item,
         isFolder = True
     )
