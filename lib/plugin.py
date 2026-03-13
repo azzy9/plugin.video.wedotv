@@ -80,21 +80,61 @@ def search_menu():
 
     """ search menu list """
 
-    list_item = xbmcgui.ListItem(MEDIA_NAMES[4])
-    list_item.setArt({
-        'icon': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
-        'poster': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
-    })
-    callback = {
-        'variant': MEDIA_TYPES[4],
+    search_items = {
+        'keyword':['Search By Keyword',list_cat],
+        'genre':['Search By Genre',list_genres],
     }
-    callback_url = plugin.url_for(list_cat, uri=pack_uri(callback))
-    xbmcplugin.addDirectoryItem(
-        handle = ADDON_HANDLE,
-        url = callback_url,
-        listitem = list_item,
-        isFolder = True
-    )
+
+    for search_item in search_items:
+        list_item = xbmcgui.ListItem(search_items[search_item][0])
+        list_item.setArt({
+            'icon': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+            'poster': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+        })
+        callback = {
+            'variant': MEDIA_TYPES[4],
+            'method': search_item,
+        }
+        callback_url = plugin.url_for(search_items[search_item][1], uri=pack_uri(callback))
+        xbmcplugin.addDirectoryItem(
+            handle = ADDON_HANDLE,
+            url = callback_url,
+            listitem = list_item,
+            isFolder = True
+        )
+
+    xbmcplugin.endOfDirectory(ADDON_HANDLE)
+
+@plugin.route('/list_genres')
+def list_genres():
+
+    """ genre list """
+
+    list_data = request_get( API_URL + '/getGenres', return_json=True )
+
+    # Make sure there is data to loop
+    if list_data and list_data.get( 'entry', False ):
+
+        # loop the data
+        for item in list_data[ 'entry' ]:
+
+            list_item = xbmcgui.ListItem(item['title'].title())
+            list_item.setArt({
+                'icon': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+                'poster': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+            })
+            callback = {
+                'variant': MEDIA_TYPES[4],
+                'term': item['id'],
+            }
+            callback_url = plugin.url_for(list_cat, uri=pack_uri(callback))
+            xbmcplugin.addDirectoryItem(
+                handle = ADDON_HANDLE,
+                url = callback_url,
+                listitem = list_item,
+                isFolder = True
+            )
+
     xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
 @plugin.route('/list/<uri>')
@@ -104,6 +144,7 @@ def list_cat(uri):
 
     params = unpack_uri( uri )
     variant = params.get( 'variant', '' )
+    term = params.get( 'term', '' )
     title = params.get( 'title', '' )
 
     is_search = False
@@ -112,7 +153,8 @@ def list_cat(uri):
 
     if variant == 'search':
         is_search = True
-        term = keyboard_input( 'Search' )
+        if not term:
+            term = keyboard_input( 'Search' )
         if term:
             extra_params_list.append( 'keyword=' + term )
 
