@@ -158,8 +158,8 @@ def list_cat(uri):
         if term:
             extra_params_list.append( 'keyword=' + term )
 
-    # we want all the movies
-    if variant == 'movies':
+    # we want all the movies & search
+    if variant in ['movies', 'search']:
         extra_params_list.append( 'limit=9999' )
 
     if ADDON_REGION > 0:
