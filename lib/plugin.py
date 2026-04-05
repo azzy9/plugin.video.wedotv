@@ -12,6 +12,7 @@ from six.moves import urllib_parse
 
 from lib.exception import PluginException
 from lib.general import *
+from lib.search_history import *
 
 API_URL = 'https://api-applicaster.wedo.tv'
 WEB_URL = 'https://www.wedotv.com/api/'
@@ -83,6 +84,7 @@ def search_menu():
     search_items = {
         'keyword':['Search By Keyword',list_cat],
         'genre':['Search By Genre',list_genres],
+        'history':['Search History',list_search_history],
     }
 
     for search_type, search_item in search_items.items():
@@ -137,6 +139,38 @@ def list_genres():
 
     xbmcplugin.endOfDirectory(ADDON_HANDLE)
 
+@plugin.route('/list_search_history')
+def list_search_history():
+
+    """ search history list """
+
+    list_data = search_history_load()
+
+    # Make sure there is data to loop
+    if list_data:
+
+        # loop the data
+        for search_item in list_data:
+
+            list_item = xbmcgui.ListItem(search_item)
+            list_item.setArt({
+                'icon': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+                'poster': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
+            })
+            callback = {
+                'variant': MEDIA_TYPES[4],
+                'term': 'keyword',
+            }
+            callback_url = plugin.url_for(list_cat, uri=pack_uri(callback))
+            xbmcplugin.addDirectoryItem(
+                handle = ADDON_HANDLE,
+                url = callback_url,
+                listitem = list_item,
+                isFolder = True
+            )
+
+    xbmcplugin.endOfDirectory(ADDON_HANDLE)
+
 @plugin.route('/list/<uri>')
 def list_cat(uri):
 
@@ -155,6 +189,9 @@ def list_cat(uri):
         is_search = True
         if not term:
             term = keyboard_input( 'Search' )
+            if term:
+                # add term to search history
+                search_history_add( term )
         if term:
             extra_params_list.append( 'keyword=' + term )
 
