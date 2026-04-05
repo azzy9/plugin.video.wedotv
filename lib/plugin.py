@@ -33,7 +33,9 @@ ADDON_REGION = int(ADDON.getSetting('region'))
 
 xbmcplugin.setContent(ADDON_HANDLE, 'movies')
 
+PLUGIN_TITLE = 'WeDoTV'
 PLUGIN_ID = 'plugin.video.wedotv'
+PLUGIN_URL = 'plugin://' + PLUGIN_ID
 MEDIA_URL = 'special://home/addons/{0}/resources/media/'.format(PLUGIN_ID)
 
 @plugin.route('/')
@@ -161,6 +163,18 @@ def list_search_history():
                 'variant': MEDIA_TYPES[4],
                 'term': 'keyword',
             }
+
+            # context menu to remove from history
+            context_menu_list = []
+            context_menu_list.append(
+                (
+                    'Remove from history',
+                    'RunPlugin(' + PLUGIN_URL + '/remove_search_history/' + urllib_parse.quote_plus( search_item ) + ')'
+                )
+            )
+
+            list_item.addContextMenuItems(context_menu_list)
+
             callback_url = plugin.url_for(list_cat, uri=pack_uri(callback))
             xbmcplugin.addDirectoryItem(
                 handle = ADDON_HANDLE,
@@ -170,6 +184,20 @@ def list_search_history():
             )
 
     xbmcplugin.endOfDirectory(ADDON_HANDLE)
+
+@plugin.route('/remove_search_history/<term>')
+def remove_search_history(term):
+
+    """ attempts to remove term from search history """
+
+    removed = False
+
+    if term:
+        term = urllib_parse.unquote_plus( term )
+        removed = search_history_remove( term )
+    
+    if removed:
+        xbmcgui.Dialog().notification(PLUGIN_TITLE, 'Term has been removed from history')
 
 @plugin.route('/list/<uri>')
 def list_cat(uri):
