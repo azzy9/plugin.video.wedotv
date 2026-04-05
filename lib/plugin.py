@@ -85,17 +85,17 @@ def search_menu():
         'genre':['Search By Genre',list_genres],
     }
 
-    for search_item in search_items:
-        list_item = xbmcgui.ListItem(search_items[search_item][0])
+    for search_type, search_item in search_items.items():
+        list_item = xbmcgui.ListItem(search_item[0])
         list_item.setArt({
             'icon': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
             'poster': MEDIA_URL + MEDIA_NAMES[4] + '.jpg',
         })
         callback = {
             'variant': MEDIA_TYPES[4],
-            'method': search_item,
+            'method': search_type,
         }
-        callback_url = plugin.url_for(search_items[search_item][1], uri=pack_uri(callback))
+        callback_url = plugin.url_for(search_item[1], uri=pack_uri(callback))
         xbmcplugin.addDirectoryItem(
             handle = ADDON_HANDLE,
             url = callback_url,
