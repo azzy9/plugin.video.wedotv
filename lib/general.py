@@ -103,27 +103,27 @@ def item_set_info( line_item, properties ):
     if KODI_VERSION > 19.8:
         vidtag = line_item.getVideoInfoTag()
         if properties.get( 'year' ):
-            vidtag.setYear( int( properties.get( 'year' ) ) )
+            vidtag.setYear( int( properties[ 'year' ] ) )
         if properties.get( 'episode' ):
-            vidtag.setEpisode( properties.get( 'episode' ) )
+            vidtag.setEpisode( properties[ 'episode' ] )
         if properties.get( 'season' ):
-            vidtag.setSeason( properties.get( 'season' ) )
+            vidtag.setSeason( int( properties.get( 'season' ) ) )
         if properties.get( 'plot' ):
-            vidtag.setPlot( properties.get( 'plot' ) )
+            vidtag.setPlot( properties[ 'plot' ] )
         if properties.get( 'title' ):
-            vidtag.setTitle( properties.get( 'title' ) )
+            vidtag.setTitle( properties[ 'title' ] )
         if properties.get( 'studio' ):
-            vidtag.setStudios([ properties.get( 'studio' ) ])
+            vidtag.setStudios([ properties[ 'studio' ] ])
         if properties.get( 'writer' ):
-            vidtag.setWriters([ properties.get( 'writer' ) ])
+            vidtag.setWriters([ properties[ 'writer' ] ])
         if properties.get( 'duration' ):
-            vidtag.setDuration( int( properties.get( 'duration' ) ) )
+            vidtag.setDuration( int( properties[ 'duration' ] ) )
         if properties.get( 'tvshowtitle' ):
-            vidtag.setTvShowTitle( properties.get( 'tvshowtitle' ) )
+            vidtag.setTvShowTitle( properties[ 'tvshowtitle' ] )
         if properties.get( 'mediatype' ):
-            vidtag.setMediaType( properties.get( 'mediatype' ) )
+            vidtag.setMediaType( properties[ 'mediatype' ] )
         if properties.get('premiered'):
-            vidtag.setPremiered( properties.get( 'premiered' ) )
+            vidtag.setPremiered( properties[ 'premiered' ] )
 
     else:
         line_item.setInfo('video', properties)
@@ -198,3 +198,39 @@ def keyboard_input(heading='', message=''):
     if keyboard.isConfirmed():
         search_string = keyboard.getText()
     return search_string
+
+def text_to_int(textnum, numwords={}):
+
+    # check type first
+    if isinstance(textnum, six.integer_types):
+        return textnum
+
+    if not numwords:
+      units = [
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+        'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen',
+        'sixteen', 'seventeen', 'eighteen', 'nineteen',
+      ]
+
+      tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
+
+      scales = ['hundred', 'thousand', 'million', 'billion', 'trillion']
+
+      numwords['and'] = (1, 0)
+      for idx, word in enumerate(units):    numwords[word] = (1, idx)
+      for idx, word in enumerate(tens):     numwords[word] = (1, idx * 10)
+      for idx, word in enumerate(scales):   numwords[word] = (10 ** (idx * 3 or 2), 0)
+
+    current = result = 0
+    for word in textnum.lower().split():
+
+        if word not in numwords:
+          return 0
+
+        scale, increment = numwords[word]
+        current = current * scale + increment
+        if scale > 100:
+            result += current
+            current = 0
+
+    return result + current
